@@ -1,11 +1,13 @@
 class TripsController < ApplicationController
   before_action :check_params, only: :index
-  before_action :check_permissions, only: :create
+  before_action :check_permissions, only: [:create, :trips_summary]
+  before_action :ensure_one_of_user_id_or_vehicle_id_is_present, only: :trips_summary
+
 
   # Params
   # user_id : Id of the user
   # vehicle_id: Id of vehicle
-  # start_time: UTC format time
+  # start_at: UTC format time
   # end_at UTC: format time
   def index
     @trips = @company.trips.search(params)
@@ -39,6 +41,17 @@ class TripsController < ApplicationController
     render json: {success: true}, status: 201
   end
 
+  # Params
+  # user_id : Id of the user
+  # vehicle_id: Id of vehicle
+  # Expects one of user_id or vehicle_id. user_id will be given priority if both passed
+  # start_at: UTC format time
+  # end_at UTC: format time
+  def trips_summary
+    trip_distance = @company.trips.search(params).sum(:distance)
+    render json: {total_distance: trip_distance}, status: 201
+  end
+
   private
 
   def trips_params
@@ -52,4 +65,9 @@ class TripsController < ApplicationController
   def check_permissions
     raise Exceptions::AuthorizationError unless current_user.admin?
   end
+
+  def ensure_one_of_user_id_or_vehicle_id_is_present
+    params[:vehicle_id] = nil if params[:user_id].present?
+  end
+
 end
