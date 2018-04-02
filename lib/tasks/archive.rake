@@ -2,7 +2,7 @@ namespace :kt do
 
   desc 'Archive old records.'
   task archive_old_trips: :environment do
-    Trip.all.each do |trip|#where("created_at < ?", Time.now - 6.months).each do |trip|
+    Trip.where("created_at < ?", Time.now - 6.months).each do |trip|
       begin
         ActiveRecord::Base.transaction do
           # Will create a trip archive and destroy the trip record.
